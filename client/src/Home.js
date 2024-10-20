@@ -8,58 +8,61 @@ function Home() {
   const [todos, setTodos] = useState([]);
 
   useEffect(() => {
-    axios
-      .get('http://localhost:4000/todos', { withCredentials: true })
-      .then((response) => {
+    const fetchTodos = async () => {
+      try {
+        const response = await axios.get('http://localhost:4000/todos', {
+          withCredentials: true,
+        });
         setTodos(response.data);
-      })
-      .catch((error) => {
-        console.error('Error fetching todos', error);
-      });
+      } catch (error) {
+        console.error('Error fetching todos:', error);
+      }
+    };
+
+    fetchTodos();
   }, []);
 
   if (!userInfo.email) {
     return 'You need to be logged in to see this page';
   }
 
-  function addTodo(e) {
+  const addTodo = async (e) => {
     e.preventDefault();
-    axios
-      .put(
+    try {
+      const response = await axios.put(
         'http://localhost:4000/todos',
-        { text: inputVal },
+        {
+          text: inputVal,
+        },
         { withCredentials: true }
-      )
-      .then((response) => {
-        setTodos((prevTodos) => [...prevTodos, response.data]);
-        setInputVal('');
-      })
-      .catch((error) => {
-        console.error('Error adding todo', error);
-      });
-  }
+      );
+      console.log('Todo added:', response.data);
+      setTodos((prevTodos) => [...prevTodos, response.data]);
+      setInputVal('');
+    } catch (error) {
+      console.error('Error adding todo:', error);
+    }
+  };
 
-  function updateTodo(todo) {
+  const updateTodo = async (todo) => {
     const data = { id: todo._id, done: !todo.done };
-    axios
-      .post('http://localhost:4000/todos', data, { withCredentials: true })
-      .then(() => {
-        setTodos((prevTodos) =>
-          prevTodos.map((t) =>
-            t._id === todo._id ? { ...t, done: !t.done } : t
-          )
-        );
-      })
-      .catch((error) => {
-        console.error('Error updating todo', error);
+    try {
+      await axios.post('http://localhost:4000/todos', data, {
+        withCredentials: true,
       });
-  }
+      setTodos((prevTodos) =>
+        prevTodos.map((t) => (t._id === todo._id ? { ...t, done: !t.done } : t))
+      );
+    } catch (error) {
+      console.error('Error updating todo:', error);
+    }
+  };
 
   return (
     <div>
       <form onSubmit={addTodo}>
         <input
-          placeholder="What do you want to do?"
+          placeholder={'What do you want to do?'}
           value={inputVal}
           onChange={(e) => setInputVal(e.target.value)}
         />
@@ -68,9 +71,9 @@ function Home() {
         {todos.map((todo) => (
           <li key={todo._id}>
             <input
-              type="checkbox"
+              type={'checkbox'}
               checked={todo.done}
-              onChange={() => updateTodo(todo)}
+              onChange={() => updateTodo(todo)} // Use onChange instead of onClick for checkboxes
             />
             {todo.done ? <del>{todo.text}</del> : todo.text}
           </li>

@@ -4,13 +4,12 @@ import UserContext from "./UserContext";
 import { useNavigate } from "react-router-dom";
 
 function Login() {
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState(false);
-
+  
   const user = useContext(UserContext);
-  const navigate = useNavigate();  // Replaces Redirect
+  const navigate = useNavigate(); // Use useNavigate for redirection
 
   function loginUser(e) {
     e.preventDefault();
@@ -22,31 +21,29 @@ function Login() {
         setEmail('');
         setPassword('');
         setLoginError(false);
-        navigate('/');  // Redirect to home after successful login
+        navigate('/'); // Navigate to home on successful login
       })
       .catch(() => {
-        setLoginError(true);  // Show error if login fails
+        setLoginError(true);
       });
   }
 
   return (
     <form onSubmit={loginUser}>
       {loginError && (
-        <div style={{ color: 'red' }}>LOGIN ERROR! WRONG EMAIL OR PASSWORD!</div>
+        <div>LOGIN ERROR! WRONG EMAIL OR PASSWORD!</div>
       )}
       <input 
         type="email" 
-        placeholder="email" 
+        placeholder="Email" 
         value={email} 
         onChange={e => setEmail(e.target.value)} 
-        required
       /><br />
       <input 
         type="password" 
-        placeholder="password" 
+        placeholder="Password" 
         value={password} 
         onChange={e => setPassword(e.target.value)} 
-        required
       /><br />
       <button type="submit">Log In</button>
     </form>

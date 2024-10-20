@@ -37,11 +37,21 @@ function App() {
           <Link to="/">Home</Link>
           {!email && (
             <>
-              | <Link to="/login">Login</Link> |
+              <Link to="/login">Login</Link>
               <Link to="/register">Register</Link>
             </>
           )}
-          {!!email && <button onClick={logout}>Logout</button>}
+          {!! email && (
+            <a
+              href="/"
+              onClick={(e) => {
+                e.preventDefault();
+                logout();
+              }}
+            >
+              Logout
+            </a>
+          )}
         </nav>
         <main>
           <Routes>
@@ -54,9 +64,4 @@ function App() {
     </UserContext.Provider>
   );
 }
-
-//hii
-//hello
-//how are you
-
 export default App;

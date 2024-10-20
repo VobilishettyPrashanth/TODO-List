@@ -1,21 +1,22 @@
 import express from 'express';
-import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
 import User from './models/user.js';
 import bcrypt from 'bcrypt';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
+import Todo from './models/todo.js';
 
-const secret = 's@123&*';
+const secret = 's@123&*'; // Retaining your original secret
 
+// Connect to MongoDB without deprecated options
 await mongoose.connect('mongodb://localhost:27017/auth-todo');
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 
 const app = express();
 app.use(cookieParser());
-app.use(bodyParser.json({ extended: true }));
+app.use(express.json()); // Using express's built-in JSON parser
 app.use(
   cors({
     credentials: true,
@@ -23,11 +24,11 @@ app.use(
   })
 );
 
-app.get('/', async (req, res) => {
+app.get('/', (req, res) => {
   res.send('ok');
 });
 
-//get
+// Get user info
 app.get('/user', (req, res) => {
   const token = req.cookies.token;
 
@@ -42,10 +43,11 @@ app.get('/user', (req, res) => {
     }
 
     // Successfully authenticated, return user email
-    res.json({ email: user.email });
+    res.json({ id: user.id, email: user.email });
   });
 });
 
+// Register user
 app.post('/register', async (req, res) => {
   const { email, password } = req.body;
   console.log('Registration attempt:', req.body); // Log the registration attempt
@@ -63,28 +65,20 @@ app.post('/register', async (req, res) => {
     const user = new User({ password: hashedPassword, email });
     const userInfo = await user.save();
 
-    jwt.sign(
-      { id: userInfo._id, email: userInfo.email },
-      secret,
-      (err, token) => {
-        if (err) {
-          return res.status(500).json({ message: 'Failed to generate token' });
-        }
+    const token = jwt.sign({ id: userInfo._id, email: userInfo.email }, secret);
 
-        res.cookie('token', token, {
-          httpOnly: true,
-          secure: false,
-          sameSite: 'strict',
-        });
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: false, // Set to true only in production with HTTPS
+      sameSite: 'lax', // Use 'strict' or 'lax' based on your requirements
+    });
 
-        res.json({
-          message: 'Registration successful',
-          id: userInfo._id,
-          email: userInfo.email,
-          token,
-        });
-      }
-    );
+    res.json({
+      message: 'Registration successful',
+      id: userInfo._id,
+      email: userInfo.email,
+      token,
+    });
   } catch (error) {
     console.error('Registration error:', error); // Log the complete error
     res
@@ -93,6 +87,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
+// Login user
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const userInfo = await User.findOne({ email });
@@ -103,42 +98,99 @@ app.post('/login', async (req, res) => {
   if (!isValidPassword) {
     return res.status(400).json({ message: 'Invalid email or password' });
   }
+
   // Generate JWT token
-  jwt.sign(
-    { id: userInfo._id, email: userInfo.email },
-    secret,
-    (err, token) => {
-      if (err) {
-        return res.status(500).json({ message: 'Failed to generate token' });
-      }
+  const token = jwt.sign({ id: userInfo._id, email: userInfo.email }, secret);
 
-      // Set the token as a cookie
-      res.cookie('token', token, {
-        httpOnly: true,
-        secure: false, // Set to true only in production with HTTPS
-        sameSite: 'lax', // Use 'strict' or 'lax' based on your requirements
-      });
+  // Set the token as a cookie
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: false, // Set to true only in production with HTTPS
+    sameSite: 'lax', // Use 'strict' or 'lax' based on your requirements
+  });
 
-      // Send the token back to the client along with user info
-      res.json({
-        message: 'Login successful',
-        id: userInfo._id,
-        email: userInfo.email,
-        token,
-      });
-    }
-  );
+  // Send the token back to the client along with user info
+  res.json({
+    message: 'Login successful',
+    id: userInfo._id,
+    email: userInfo.email,
+    token,
+  });
 });
 
+// Logout user
 app.post('/logout', (req, res) => {
   res
     .cookie('token', '', {
       httpOnly: true,
-      secure: true, // use this in production with HTTPS
+      secure: true, // Use this in production with HTTPS
       sameSite: 'strict',
       expires: new Date(0), // Set the expiration date to a past date
     })
     .send({ message: 'Logged out successfully' });
+});
+
+// Get all todos for the authenticated user
+app.get('/todos', async (req, res) => {
+  try {
+    const token = req.cookies.token;
+    const payload = jwt.verify(token, secret);
+    const todos = await Todo.find({ user: payload.id }); // Use payload.id directly as string
+    res.json(todos);
+  } catch (err) {
+    console.error('Error fetching todos:', err);
+    res.status(500).json({ error: 'Failed to fetch todos' });
+  }
+});
+
+// Add a new todo
+app.put('/todos', async (req, res) => {
+  try {
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({ error: 'Token is required' });
+    }
+    const payload = jwt.verify(token, secret);
+    const todo = new Todo({
+      text: req.body.text,
+      done: false,
+      user: payload.id, // Use payload.id directly as string
+    });
+
+    const savedTodo = await todo.save();
+    res.status(201).json(savedTodo); // Return the created todo with a 201 status
+  } catch (err) {
+    console.error('Error adding todo:', err);
+    res.status(500).json({ error: 'Failed to add todo' });
+  }
+});
+
+// Update a todo's completion status
+app.post('/todos', async (req, res) => {
+  try {
+    const token = req.cookies.token;
+    const payload = jwt.verify(token, secret);
+    const { id, done } = req.body;
+
+    const result = await Todo.updateOne(
+      {
+        _id: id, // Use id directly as string
+        user: payload.id, // Use payload.id directly as string
+      },
+      { done }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res
+        .status(404)
+        .json({ error: 'Todo not found or not owned by user' });
+    }
+
+    res.sendStatus(200); // Send a 200 status for successful update
+  } catch (err) {
+    console.error('Error updating todo:', err);
+    res.status(500).json({ error: 'Failed to update todo' });
+  }
 });
 
 app.listen(4000, () => {

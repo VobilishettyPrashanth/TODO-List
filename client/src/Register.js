@@ -1,15 +1,15 @@
 import { useState, useContext } from 'react';
 import axios from 'axios';
 import UserContext from "./UserContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // Use useNavigate instead of Redirect
 
 function Register() {
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [registerError, setRegisterError] = useState(false); // Error state for registration
+
   const user = useContext(UserContext);
-  const navigate = useNavigate(); // Replaces Redirect
+  const navigate = useNavigate(); // Initialize navigate
 
   function registerUser(e) {
     e.preventDefault();
@@ -35,14 +35,14 @@ function Register() {
       )}
       <input 
         type="email" 
-        placeholder="email" 
+        placeholder="Email" 
         value={email} 
         onChange={e => setEmail(e.target.value)} 
         required 
       /><br />
       <input 
         type="password" 
-        placeholder="password" 
+        placeholder="Password" 
         value={password} 
         onChange={e => setPassword(e.target.value)} 
         required 
