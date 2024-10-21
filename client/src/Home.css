@@ -1,0 +1,64 @@
+.home-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.home-header {
+  margin-bottom: 20px;
+}
+
+.home-header h2 {
+  font-weight: 600;
+}
+
+.home-form {
+  display: flex;
+  justify-content: space-between;
+}
+
+.home-form .form-control {
+  flex: 1;
+  margin-right: 10px;
+}
+
+.home-todo-list {
+  margin-top: 20px;
+}
+
+.list-group-item {
+  transition: background-color 0.3s;
+}
+
+.list-group-item:hover {
+  background-color: #e9ecef;
+}
+
+.list-group-item .form-check-input {
+  margin-right: 10px;
+}
+
+.text-decoration-line-through {
+  text-decoration: line-through;
+  color: #6c757d;
+}
+
+.btn-danger {
+  margin-left: 10px;
+  transition: background-color 0.3s;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+.home-login-message {
+  margin-top: 20px;
+}
+
+.alert {
+  margin-bottom: 20px;
+}

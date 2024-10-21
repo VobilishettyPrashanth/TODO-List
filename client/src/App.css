@@ -1,31 +1,37 @@
-body{
-  background-color:  #f0f0f0;
+body {
+  background-image: url('./back-image.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
-
-nav{
+nav {
   text-align: center;
 }
 
-nav a{
+nav a {
   display: inline-block;
   padding: 15px;
   text-decoration: none;
   color: #333;
+  background-color: #007bff; 
+  border-radius: 5px;
+  margin: 0 5px;
+  transition: background-color 0.3s ease;
 }
 
-main{
-  width: 240px;
+main {
+  width: 500px;
   margin: 10px auto;
   text-align: center;
   background-color: #fff;
   padding: 15px;
   border-radius: 5px;
-  box-shadow: 0 2px 2px rgba(0,0,0,.1);
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
 }
 
-ul{
-  padding-left:0;
+ul {
+  padding-left: 0;
 }
-ul li{
+ul li {
   display: block;
 }

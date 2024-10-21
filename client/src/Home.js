@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import UserContext from './UserContext';
 import axios from 'axios';
+import './Home.css';
 
 function Home() {
   const userInfo = useContext(UserContext);
@@ -23,7 +24,13 @@ function Home() {
   }, []);
 
   if (!userInfo.email) {
-    return 'You need to be logged in to see this page';
+    return (
+      <div className="home-login-message">
+        <p className="alert alert-warning text-center">
+          Please Login to View Your Todo-List
+        </p>
+      </div>
+    );
   }
 
   const addTodo = async (e) => {
@@ -58,24 +65,59 @@ function Home() {
     }
   };
 
+  const deleteTodo = async (todoId) => {
+    try {
+      await axios.delete(`http://localhost:4000/todos/${todoId}`, {
+        withCredentials: true,
+      });
+      setTodos((prevTodos) => prevTodos.filter((todo) => todo._id !== todoId));
+    } catch (error) {
+      console.error('Error deleting todo:', error);
+    }
+  };
+
   return (
-    <div>
-      <form onSubmit={addTodo}>
-        <input
-          placeholder={'What do you want to do?'}
-          value={inputVal}
-          onChange={(e) => setInputVal(e.target.value)}
-        />
+    <div className="home-container">
+      <div className="home-header text-center">
+        <h2>Todo List</h2>
+      </div>
+      <form onSubmit={addTodo} className="home-form input-group mb-3">
+        <div>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="What do you want to do?"
+            value={inputVal}
+            onChange={(e) => setInputVal(e.target.value)}
+          />
+          <button type="submit" className="btn btn-primary btn-sm">
+            Add
+          </button>
+        </div>
       </form>
-      <ul>
+      <ul className="list-group home-todo-list">
         {todos.map((todo) => (
-          <li key={todo._id}>
-            <input
-              type={'checkbox'}
-              checked={todo.done}
-              onChange={() => updateTodo(todo)} // Use onChange instead of onClick for checkboxes
-            />
-            {todo.done ? <del>{todo.text}</del> : todo.text}
+          <li
+            key={todo._id}
+            className="list-group-item d-flex justify-content-between align-items-center"
+          >
+            <div>
+              <input
+                type="checkbox"
+                className="form-check-input"
+                checked={todo.done}
+                onChange={() => updateTodo(todo)}
+              />
+              <span className={todo.done ? 'text-decoration-line-through' : ''}>
+                {todo.text}
+              </span>
+              <button
+                className="btn btn-danger btn-sm"
+                onClick={() => deleteTodo(todo._id)}
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>

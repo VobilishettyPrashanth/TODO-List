@@ -7,16 +7,16 @@ import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import Todo from './models/todo.js';
 
-const secret = 's@123&*'; // Retaining your original secret
+const secret = 's@123&*';
 
-// Connect to MongoDB without deprecated options
+// Connect to MongoDB
 await mongoose.connect('mongodb://localhost:27017/auth-todo');
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 
 const app = express();
 app.use(cookieParser());
-app.use(express.json()); // Using express's built-in JSON parser
+app.use(express.json());
 app.use(
   cors({
     credentials: true,
@@ -41,7 +41,6 @@ app.get('/user', (req, res) => {
       console.error('Token verification error:', err);
       return res.status(401).json({ message: 'Token expired or invalid' });
     }
-
     // Successfully authenticated, return user email
     res.json({ id: user.id, email: user.email });
   });
@@ -50,7 +49,7 @@ app.get('/user', (req, res) => {
 // Register user
 app.post('/register', async (req, res) => {
   const { email, password } = req.body;
-  console.log('Registration attempt:', req.body); // Log the registration attempt
+  console.log('Registration attempt:', req.body);
 
   try {
     // Check if the user already exists
@@ -69,8 +68,8 @@ app.post('/register', async (req, res) => {
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: false, // Set to true only in production with HTTPS
-      sameSite: 'lax', // Use 'strict' or 'lax' based on your requirements
+      secure: false,
+      sameSite: 'strict',
     });
 
     res.json({
@@ -80,7 +79,7 @@ app.post('/register', async (req, res) => {
       token,
     });
   } catch (error) {
-    console.error('Registration error:', error); // Log the complete error
+    console.error('Registration error:', error);
     res
       .status(500)
       .json({ message: 'Internal Server Error', error: error.message });
@@ -105,8 +104,8 @@ app.post('/login', async (req, res) => {
   // Set the token as a cookie
   res.cookie('token', token, {
     httpOnly: true,
-    secure: false, // Set to true only in production with HTTPS
-    sameSite: 'lax', // Use 'strict' or 'lax' based on your requirements
+    secure: false,
+    sameSite: 'strict',
   });
 
   // Send the token back to the client along with user info
@@ -123,9 +122,9 @@ app.post('/logout', (req, res) => {
   res
     .cookie('token', '', {
       httpOnly: true,
-      secure: true, // Use this in production with HTTPS
+      secure: true,
       sameSite: 'strict',
-      expires: new Date(0), // Set the expiration date to a past date
+      expires: new Date(0),
     })
     .send({ message: 'Logged out successfully' });
 });
@@ -135,7 +134,7 @@ app.get('/todos', async (req, res) => {
   try {
     const token = req.cookies.token;
     const payload = jwt.verify(token, secret);
-    const todos = await Todo.find({ user: payload.id }); // Use payload.id directly as string
+    const todos = await Todo.find({ user: payload.id });
     res.json(todos);
   } catch (err) {
     console.error('Error fetching todos:', err);
@@ -154,7 +153,7 @@ app.put('/todos', async (req, res) => {
     const todo = new Todo({
       text: req.body.text,
       done: false,
-      user: payload.id, // Use payload.id directly as string
+      user: payload.id,
     });
 
     const savedTodo = await todo.save();
@@ -174,8 +173,8 @@ app.post('/todos', async (req, res) => {
 
     const result = await Todo.updateOne(
       {
-        _id: id, // Use id directly as string
-        user: payload.id, // Use payload.id directly as string
+        _id: id,
+        user: payload.id,
       },
       { done }
     );
@@ -190,6 +189,31 @@ app.post('/todos', async (req, res) => {
   } catch (err) {
     console.error('Error updating todo:', err);
     res.status(500).json({ error: 'Failed to update todo' });
+  }
+});
+
+// Delete a todo by ID
+app.delete('/todos/:id', async (req, res) => {
+  try {
+    const token = req.cookies.token;
+    const payload = jwt.verify(token, secret);
+
+    const { id } = req.params;
+    const result = await Todo.deleteOne({
+      _id: id,
+      user: payload.id, // Ensure the todo belongs to the authenticated user
+    });
+
+    if (result.deletedCount === 0) {
+      return res
+        .status(404)
+        .json({ error: 'Todo not found or not owned by user' });
+    }
+
+    res.sendStatus(200); // Return 200 status if deletion is successful
+  } catch (err) {
+    console.error('Error deleting todo:', err);
+    res.status(500).json({ error: 'Failed to delete todo' });
   }
 });
 
