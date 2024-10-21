@@ -32,17 +32,18 @@ A simple and user-friendly Todo List application built with React, Node, Express
 1. Clone the repository:
 
    git clone https://github.com/yourusername/todo-list-app.git
+   
    cd todo-list-app
 
-2. Install the dependencies:
+3. Install the dependencies:
 
    npm install
 
-3. Start the development server:
+4. Start the development server:
 
    npm start
 
-4. Open your browser and navigate to `http://localhost:3000`.
+5. Open your browser and navigate to `http://localhost:3000`.
 
 ### Backend Setup
 
